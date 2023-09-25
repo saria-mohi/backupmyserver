@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+#
+# disable all services listening at port 80
+# Get the list of processes listening on port 80
+pids=$(sudo lsof -t -i :80)
+for pid in $pid
+do
+  sudo kill "$pid" &>/dev/null
+done
+#stop haproxy
+sudo systemctl stop haproxy
+sudo systemctl stop haproxy.service
+# to install certbot
+sudo apt-get -y update
+sudo apt-get -y install certbot
+# getting the certificate
+#create a directory to store our certs
+sudo mkdir -p /etc/haproxy/certbot_certs
+#obtaining the certificate
+sudo certbot certonly --standalone -d www.saria-mohi.tech --non-interactive --agree-tos --email saria.m.mohammed@gmail.com
+# Combine fullchain.pem and privkey.pem and save it to /etc/haproxy/certbot_certs folder
+sudo -E bash -c 'cat /etc/letsencrypt/live/www.saria-mohi.tech/fullchain.pem /etc/letsencrypt/live/www.saria-mohi.tech/privkey.pem > /etc/haproxy/certbot_certs/haproxy.pem'
+# remove read write and execute from group and others on that file haprox.pem
+sudo chmod -R go-rwx /etc/haproxy/certbot_certs/
+# generate dhparams
+# sudo openssl dhparam -out /etc/haproxy/haproxy.pem 2048
+# start haproxy
+sudo systemctl start haproxy
